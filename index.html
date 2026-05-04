@@ -1,25 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Чат-приложение</title>
-    <script
-        src="https://telegram.org/js/telegram-web-app.js"
-        async
-        onload="onTelegramWebAppReady()"
-    ></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Анонимный Чат</title>
     <style>
-        :root {
-            --primary: #5d8aa8;
-            --secondary: #f0f4f8;
-            --accent: #ff6b6b;
-            --text: #333;
-            --light-text: #fff;
-            --border-radius: 12px;
-            --shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -28,442 +13,642 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, var(--primary), #87ceeb);
-            color: var(--text);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
             min-height: 100vh;
             padding: 16px;
         }
 
-        .app-container {
-            max-width: 500px;
+        .container {
+            max-width: 480px;
             margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            min-height: calc(100vh - 32px);
         }
 
-        .screen {
-            display: none;
-            flex: 1;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+        .header {
             text-align: center;
-            gap: 24px;
-            padding: 20px;
+            padding: 24px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .screen.active {
-            display: flex;
-        }
-
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--light-text);
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;  /* Добавляем fallback */
             margin-bottom: 8px;
         }
 
-        .gender-buttons, .search-buttons, .action-buttons {
+        .header p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        .profile-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .profile-header {
             display: flex;
-            flex-direction: column;
+            align-items: center;
             gap: 16px;
-            width: 100%;
-            max-width: 300px;
+            margin-bottom: 20px;
+        }
+
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .profile-info h3 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .profile-info p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
+        }
+
+        .vip-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
         }
 
         .btn {
-            padding: 16px 24px;
+            width: 100%;
+            padding: 14px 24px;
             border: none;
-            border-radius: var(--border-radius);
-            background: var(--secondary);
-            color: var(--text);
+            border-radius: 12px;
             font-size: 16px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
+            margin-bottom: 12px;
         }
 
         .btn-primary {
-            background: var(--accent);
-            color: var(--light-text);
-        }
-
-        .input-field {
-            width: 100%;
-            max-width: 300px;
-            padding: 14px 16px;
-            border: 2px solid var(--secondary);
-            border-radius: var(--border-radius);
-            font-size: 16px;
-            outline: none;
-            background: var(--secondary);
-        }
-
-        .input-field:focus {
-            border-color: var(--primary);
-        }
-
-        .chat-container {
-            flex: 1;
-            background: var(--secondary);
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chat-messages {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .message {
-            padding: 12px 16px;
-            border-radius: var(--border-radius);
-            max-width: 70%;
-        }
-
-        .my-message {
-            align-self: flex-end;
-            background: var(--primary);
-            color: var(--light-text);
-        }
-
-        .partner-message {
-            align-self: flex-start;
-            background: #e9ecef;
-        }
-
-        .chat-input {
-            display: flex;
-            padding: 16px;
-            border-top: 1px solid #ddd;
-            background: white;
-        }
-
-        .chat-input input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 1px solid #ddd;
-            border-radius: var(--border-radius);
-            outline: none;
-        }
-
-        .chat-input button {
-            padding: 12px 20px;
-            background: var(--primary);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border: none;
-            border-radius: var(--border-radius);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .search-section {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .search-options {
+            display: flex;
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .search-option {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: transparent;
+            color: white;
             cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
         }
 
-        .status-bar {
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.9);
-            border-radius: var(--border-radius);
+        .search-option.active {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .chat-status {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            margin: 20px 0;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+        }
+
+        .searching-animation {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: pulse 1.5s infinite;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 1;
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 20px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-content h2 {
             margin-bottom: 16px;
+            text-align: center;
         }
 
-        .vip-badge {
-            color: gold;
-            font-weight: bold;
+        .payment-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
+            font-size: 14px;
         }
 
-        .hidden {
-            display: none !important;
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 2000;
+            display: none;
+        }
+
+        .toast.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .search-options {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Экран выбора пола -->
-        <div id="gender-screen" class="screen active">
-            <h1>Выбери свой пол</h1>
-            <div class="gender-buttons">
-                <button class="btn" data-gender="male">
-                    <span>👦</span> Я парень
-                </button>
-                <button class="btn" data-gender="female">
-                    <span>👧</span> Я девушка
-                </button>
-            </div>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🤖 Анонимный Чат</h1>
+            <p>Общайся с незнакомцами анонимно</p>
         </div>
 
-        <!-- Экран ввода возраста -->
-        <div id="age-screen" class="screen">
-            <h1>Введи возраст</h1>
-            <input type="number" class="input-field" id="age-input" placeholder="Например: 25">
-            <button class="btn btn-primary" id="age-submit">Далее</button>
-        </div>
-
-        <!-- Экран поиска собеседника -->
-        <div id="search-screen" class="screen">
-            <h1>Кого ищешь?</h1>
-            <div class="search-buttons">
-                <button class="btn" data-search="male">👦 Парень</button>
-                <button class="btn" data-search="female">👧 Девушка</button>
-                <button class="btn" data-search="any">🔀 Любой</button>
-            </div>
-        </div>
-
-        <!-- Экран чата -->
-        <div id="chat-screen" class="screen">
-            <div class="status-bar">
-                <span id="chat-status">Ищем собеседника...</span>
-                <span class="vip-badge" id="vip-status"></span>
-            </div>
-            <div class="chat-container">
-                <div class="chat-messages" id="messages-container">
-                    <!-- Сообщения будут добавляться сюда -->
-                </div>
-                <div class="chat-input">
-                    <input type="text" id="message-input" placeholder="Напиши сообщение...">
-                    <button id="send-btn">Отправить</button>
+        <!-- Profile Card -->
+        <div class="profile-card" id="profileCard">
+            <div class="profile-header">
+                <div class="avatar" id="avatarIcon">👤</div>
+                <div class="profile-info">
+                    <h3>
+                        <span id="userName">Гость</span>
+                        <span class="vip-badge" id="vipBadge" style="display:none;">💎 VIP</span>
+                    </h3>
+                    <p id="userAge">Возраст не указан</p>
                 </div>
             </div>
-            <div class="action-buttons">
-                <button class="btn" id="next-chat">🔁 Следующий</button>
-                <button class="btn" id="stop-chat">❌ Стоп</button>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="chatCount">0</div>
+                    <div class="stat-label">Чатов сегодня</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="onlineCount">0</div>
+                    <div class="stat-label">Онлайн</div>
+                </div>
             </div>
+
+            <button class="btn btn-secondary" onclick="refreshProfile()">
+                🔄 Обновить профиль
+            </button>
         </div>
 
-                <!-- Экран профиля -->
-        <div id="profile-screen" class="screen">
-            <h1>👤 Мой профиль</h1>
-            <div class="profile-info">
-                <p><strong>Пол:</strong> <span id="profile-gender">Не указан</span></p>
-                <p><strong>Возраст:</strong> <span id="profile-age">Не указан</span></p>
-                <p><strong>Ищу:</strong> <span id="profile-search">Не указано</span></p>
-                <p><strong>VIP:</strong> <span id="profile-vip">Нет</span></p>
+        <!-- Search Section -->
+        <div class="search-section">
+            <h3>🔎 Поиск собеседника</h3>
+            <p style="color: rgba(255, 255, 255, 0.6); font-size: 14px; margin: 8px 0;">
+                Выберите, кого хотите найти
+            </p>
+
+            <div class="search-options" id="searchOptions">
+                <button class="search-option" data-search="male" onclick="setSearch('male')">
+                    👦 Парень
+                </button>
+                <button class="search-option" data-search="female" onclick="setSearch('female')">
+                    👧 Девушка
+                </button>
+                <button class="search-option active" data-search="any" onclick="setSearch('any')">
+                    🔀 Любой
+                </button>
             </div>
-            <button class="btn btn-primary" id="back-to-search">Назад к поиску</button>
+
+            <button class="btn btn-primary" id="searchBtn" onclick="startSearch()">
+                🚀 Начать поиск
+            </button>
+
+            <button class="btn btn-danger" id="stopBtn" style="display:none;" onclick="stopSearch()">
+                ❌ Остановить поиск
+            </button>
+        </div>
+
+        <!-- Search Status -->
+        <div class="chat-status" id="searchStatus" style="display:none;">
+            <h3>🔍 Ищем собеседника...</h3>
+            <div class="searching-animation">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+            <p style="color: rgba(255, 255, 255, 0.6); font-size: 14px;">
+                Пожалуйста, подождите
+            </p>
+        </div>
+
+        <!-- VIP Banner -->
+        <div style="text-align: center; margin: 20px 0;" id="vipBanner">
+            <button class="btn btn-secondary" onclick="openVipModal()">
+                💎 Получить VIP
+            </button>
         </div>
     </div>
 
-<script>
-let tg = null;
-let userData = {
-    gender: null,
-    age: null,
-    search: null,
-    isVIP: false
-};
+    <!-- VIP Modal -->
+    <div class="modal" id="vipModal">
+        <div class="modal-content">
+            <h2>💎 VIP Подписка</h2>
+            <p style="text-align: center; color: rgba(255, 255, 255, 0.8);">
+                Получите эксклюзивные возможности
+            </p>
 
-// Функция, вызываемая после загрузки Telegram WebApp
-function onTelegramWebAppReady() {
-    console.log('Telegram WebApp загружен');
+            <div class="payment-info">
+                <p><strong>💰 Цена:</strong> 300₽ / 1 месяц</p>
+                <p><strong>💳 Реквизиты:</strong> 2200 7012 4643 5322</p>
+                <p style="margin-top: 8px; font-size: 12px; color: rgba(255, 255, 255, 0.6);">
+                    После оплаты отправьте скриншот боту
+                </p>
+            </div>
 
-    tg = window.Telegram.WebApp;
-    tg.expand();
+            <button class="btn btn-primary" onclick="copyPaymentInfo()">
+                📋 Скопировать реквизиты
+            </button>
+            <button class="btn btn-secondary" onclick="closeVipModal()">
+                ❌ Закрыть
+            </button>
+        </div>
+    </div>
 
-    // Теперь инициализируем приложение
-    initializeApp();
-}
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
 
-// Инициализация приложения после загрузки Telegram API
-function initializeApp() {
-    // Получаем элементы DOM
-    const screens = {
-        gender: document.getElementById('gender-screen'),
-        age: document.getElementById('age-screen'),
-        search: document.getElementById('search-screen'),
-        chat: document.getElementById('chat-screen'),
-        profile: document.getElementById('profile-screen')
-    };
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        // Инициализация Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
-    const buttons = {
-        gender: document.querySelectorAll('.gender-buttons .btn'),
-        search: document.querySelectorAll('.search-buttons .btn'),
-        nextChat: document.getElementById('next-chat'),
-        stopChat: document.getElementById('stop-chat'),
-        backToSearch: document.getElementById('back-to-search'),
-        ageSubmit: document.getElementById('age-submit'),
-        sendBtn: document.getElementById('send-btn')
-    };
+        // Состояние приложения
+        let userData = {
+            id: tg.initDataUnsafe?.user?.id || null,
+            username: tg.initDataUnsafe?.user?.username || 'Гость',
+            firstName: tg.initDataUnsafe?.user?.first_name || 'Пользователь',
+            gender: null,
+            age: null,
+            search: 'any',
+            isVip: false,
+            isSearching: false
+        };
 
-    const inputs = {
-        age: document.getElementById('age-input'),
-        message: document.getElementById('message-input')
-    };
-
-    const statusElements = {
-        chatStatus: document.getElementById('chat-status'),
-        vipStatus: document.getElementById('vip-status'),
-        messagesContainer: document.getElementById('messages-container')
-    };
-
-    const profileElements = {
-        gender: document.getElementById('profile-gender'),
-        age: document.getElementById('profile-age'),
-        search: document.getElementById('profile-search'),
-        vip: document.getElementById('profile-vip')
-    };
-
-    // Переключение экранов
-    function showScreen(screenName) {
-        Object.values(screens).forEach(screen => {
-            screen.classList.remove('active');
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
         });
-        screens[screenName].classList.add('active');
-    }
 
-    // Обработка выбора пола
-    buttons.gender.forEach(btn => {
-        btn.addEventListener('click', function() {
-            userData.gender = this.dataset.gender;
-            console.log('Выбран пол:', userData.gender);
-            sendDataToBot({action: 'set_gender', gender: userData.gender});
-            showScreen('age');
-        });
-    });
+        function initApp() {
+            // Загрузка данных из Telegram
+            if (tg.initDataUnsafe?.user) {
+                userData.id = tg.initDataUnsafe.user.id;
+                userData.username = tg.initDataUnsafe.user.username || 'Гость';
+                userData.firstName = tg.initDataUnsafe.user.first_name || 'Пользователь';
+            }
 
-    // Отправка возраста
-    buttons.ageSubmit.addEventListener('click', function() {
-        const age = parseInt(inputs.age.value);
-        if (age >= 10 && age <= 100) {
-            userData.age = age;
-            sendDataToBot({action: 'set_age', age: userData.age});
-            showScreen('search');
-        } else {
-            alert('Введи нормальный возраст (10–100 лет)');
+            updateUI();
+            loadUserData();
         }
-    });
 
-    // Выбор типа поиска
-    buttons.search.forEach(btn => {
-        btn.addEventListener('click', function() {
-            userData.search = this.dataset.search;
-            sendDataToBot({action: 'set_search', search: userData.search});
-            showScreen('chat');
-            statusElements.chatStatus.textContent = 'Ищем собеседника...';
-        });
-    });
+        function updateUI() {
+            // Имя пользователя
+            document.getElementById('userName').textContent = 
+                userData.firstName || userData.username || 'Гость';
 
-    // Отправка сообщений в чате
-    buttons.sendBtn.addEventListener('click', function() {
-        const message = inputs.message.value.trim();
-        if (message) {
-            addMessage(message, 'my-message');
-            sendDataToBot({action: 'send_message', message: message});
-            inputs.message.value = '';
+            // Аватар
+            const avatarIcon = document.getElementById('avatarIcon');
+            if (userData.gender === 'male') {
+                avatarIcon.textContent = '👦';
+            } else if (userData.gender === 'female') {
+                avatarIcon.textContent = '👧';
+            } else {
+                avatarIcon.textContent = '👤';
+            }
+
+            // Возраст
+            document.getElementById('userAge').textContent = 
+                userData.age ? `Возраст: ${userData.age} лет` : 'Возраст не указан';
+
+            // VIP бейдж
+            document.getElementById('vipBadge').style.display = 
+                userData.isVip ? 'inline-flex' : 'none';
+
+            // VIP баннер
+            document.getElementById('vipBanner').style.display = 
+                userData.isVip ? 'none' : 'block';
+
+            // Кнопки поиска
+            document.getElementById('searchBtn').style.display = 
+                userData.isSearching ? 'none' : 'block';
+            document.getElementById('stopBtn').style.display = 
+                userData.isSearching ? 'block' : 'none';
+
+            // Статус поиска
+            document.getElementById('searchStatus').style.display = 
+                userData.isSearching ? 'block' : 'none';
+
+            // Подсветка активной опции поиска
+            document.querySelectorAll('.search-option').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.search === userData.search);
+            });
         }
-    });
 
-    // Следующий собеседник
-    buttons.nextChat.addEventListener('click', function() {
-        sendDataToBot({action: 'next_chat'});
-        statusElements.chatStatus.textContent = 'Ищем нового собеседника...';
-    });
-
-    // Остановка чата
-    buttons.stopChat.addEventListener('click', function() {
-        sendDataToBot({action: 'stop_chat'});
-        showScreen('search');
-    });
-
-    // Возврат к поиску из профиля
-    buttons.backToSearch.addEventListener('click', function() {
-        showScreen('search');
-    });
-
-    // Добавление сообщения в чат
-    function addMessage(text, className) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${className}`;
-        messageDiv.textContent = text;
-        statusElements.messagesContainer.appendChild(messageDiv);
-        statusElements.messagesContainer.scrollTop = statusElements.messagesContainer.scrollHeight;
-    }
-
-    // Отправка данных боту
-    function sendDataToBot(data) {
-        console.log('Отправка данных боту:', data);
-        try {
-            tg.sendData(JSON.stringify(data));
-        } catch (error) {
-            console.error('Ошибка отправки данных:', error);
-        }
-    }
-
-    // Обработчик входящих данных от бота
-    window.addEventListener('message', function(event) {
-        try {
-            const data = JSON.parse(event.data);
-            switch (data.action) {
-                case 'show_age_screen':
-                    showScreen('age');
-                    break;
-                case 'show_search_screen':
-                    showScreen('search');
-            break;
-            case 'show_chat_screen':
-                showScreen('chat');
-                statusElements.chatStatus.textContent = data.status || 'Ищем собеседника...';
-                break;
-            case 'update_chat_status':
-                statusElements.chatStatus.textContent = data.status;
-                break;
-            case 'message_sent':
-                inputs.message.value = '';
-                break;
-            case 'new_message':
-                addMessage(data.message, 'partner-message');
-                break;
-            case 'chat_found':
-                statusElements.chatStatus.textContent = 'Собеседник найден!';
-                if (data.isVIP) {
-                    statusElements.vipStatus.textContent = '💎 VIP';
-                } else {
-                    statusElements.vipStatus.textContent = '';
+        function loadUserData() {
+            // Здесь можно загрузить данные пользователя с сервера
+            // Пока используем localStorage для демонстрации
+            const saved = localStorage.getItem('userData');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed.id === userData.id) {
+                    userData = { ...userData, ...parsed };
                 }
-                break;
-            case 'update_profile':
-                updateProfile(data.user);
-                break;
-            case 'error':
-                alert(data.message);
-                break;
+            }
+
+            // Установка основного цвета Telegram
+            tg.MainButton.hide();
+            updateUI();
         }
-    } catch (e) {
-        console.error('Error processing bot message:', e);
-    }
-});
 
-    // Обновление профиля
-    function updateProfile(userData) {
-        profileElements.gender.textContent = userData.gender === 'male' ? 'Парень' : 'Девушка';
-        profileElements.age.textContent = userData.age;
-        profileElements.search.textContent =
-            userData.search === 'male' ? 'Парня' :
-            userData.search === 'female' ? 'Девушку' : 'Любого';
-        profileElements.vip.textContent = userData.isVIP ? 'Да' : 'Нет';
-        if (userData.isVIP) {
-            profileElements.vip.style.color = 'gold';
-            profileElements.vip.style.fontWeight = 'bold';
+        function saveUserData() {
+            localStorage.setItem('userData', JSON.stringify(userData));
+            // Отправка данных боту
+            if (tg.initDataUnsafe?.user) {
+                tg.sendData(JSON.stringify({
+                    action: 'update_profile',
+                    gender: userData.gender,
+                    age: userData.age,
+                    search: userData.search
+                }));
+            }
         }
-    }
-}
 
-// Если Telegram WebApp уже загружен (например, при перезагрузке страницы)
-if (window.Telegram && window.Telegram.WebApp) {
-    onTelegramWebAppReady();
-}
+        function setSearch(type) {
+            userData.search = type;
+            saveUserData();
+            updateUI();
+        }
 
-</script>
+        function startSearch() {
+            if (!userData.gender || !userData.age) {
+                showToast('⚠️ Сначала заполните профиль в боте');
+                return;
+            }
+
+            userData.isSearching = true;
+            updateUI();
+
+            // Отправка команды поиска боту
+            tg.sendData(JSON.stringify({
+                action: 'start_search',
+                search: userData.search
+            }));
+
+            showToast('🔍 Поиск собеседника...');
+
+            // Имитация поиска (в реальном приложении - через WebSocket)
+            setTimeout(() => {
+                userData.isSearching = false;
+                updateUI();
+                showToast('✅ Собеседник найден! Вернитесь в чат');
+            }, 3000);
+        }
+
+        function stopSearch() {
+            userData.isSearching = false;
+            updateUI();
+
+            tg.sendData(JSON.stringify({
+                action: 'stop_search'
+            }));
+
+            showToast('❌ Поиск остановлен');
+        }
+
+        function refreshProfile() {
+            loadUserData();
+            updateUI();
+            showToast('🔄 Профиль обновлен');
+        }
+
+        function openVipModal() {
+            document.getElementById('vipModal').classList.add('active');
+        }
+
+        function closeVipModal() {
+            document.getElementById('vipModal').classList.remove('active');
+        }
+
+        async function copyPaymentInfo() {
+            const paymentInfo = '2200 7012 4643 5322';
+            try {
+                await navigator.clipboard.writeText(paymentInfo);
+                showToast('📋 Реквизиты скопированы');
+            } catch (err) {
+                showToast('❌ Не удалось скопировать');
+            }
+            closeVipModal();
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // Обработка ответа от бота
+        tg.onEvent('mainButtonClicked', () => {
+            tg.sendData(JSON.stringify({
+                action: 'main_button_clicked'
+            }));
+        });
+
+        // Закрытие Web App
+        tg.onEvent('viewportChanged', (event) => {
+            if (event.isStateStable) {
+                updateUI();
+            }
+        });
+
+        // Экспорт функций для использования в HTML
+        window.setSearch = setSearch;
+        window.startSearch = startSearch;
+        window.stopSearch = stopSearch;
+        window.refreshProfile = refreshProfile;
+        window.openVipModal = openVipModal;
+        window.closeVipModal = closeVipModal;
+        window.copyPaymentInfo = copyPaymentInfo;
+    </script>
 </body>
 </html>
