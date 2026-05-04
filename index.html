@@ -4,7 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Чат-приложение</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script
+        src="https://telegram.org/js/telegram-web-app.js"
+        async
+        onload="onTelegramWebAppReady()"
+    ></script>
     <style>
         :root {
             --primary: #5d8aa8;
@@ -251,49 +255,8 @@
         </div>
     </div>
 
-    <script>
-       // Инициализация Telegram Web App
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-// Элементы DOM
-const screens = {
-    gender: document.getElementById('gender-screen'),
-    age: document.getElementById('age-screen'),
-    search: document.getElementById('search-screen'),
-    chat: document.getElementById('chat-screen'),
-    profile: document.getElementById('profile-screen')
-};
-
-const buttons = {
-    gender: document.querySelectorAll('.gender-buttons .btn'),
-    search: document.querySelectorAll('.search-buttons .btn'),
-    nextChat: document.getElementById('next-chat'),
-    stopChat: document.getElementById('stop-chat'),
-    backToSearch: document.getElementById('back-to-search'),
-    ageSubmit: document.getElementById('age-submit'),
-    sendBtn: document.getElementById('send-btn')
-};
-
-const inputs = {
-    age: document.getElementById('age-input'),
-    message: document.getElementById('message-input')
-};
-
-const statusElements = {
-    chatStatus: document.getElementById('chat-status'),
-    vipStatus: document.getElementById('vip-status'),
-    messagesContainer: document.getElementById('messages-container')
-};
-
-const profileElements = {
-    gender: document.getElementById('profile-gender'),
-    age: document.getElementById('profile-age'),
-    search: document.getElementById('profile-search'),
-    vip: document.getElementById('profile-vip')
-};
-
-// Данные пользователя
+<script>
+let tg = null;
 let userData = {
     gender: null,
     age: null,
@@ -301,117 +264,166 @@ let userData = {
     isVIP: false
 };
 
-// Переключение экранов
-function showScreen(screenName) {
-    Object.values(screens).forEach(screen => {
-        screen.classList.remove('active');
-    });
-    screens[screenName].classList.add('active');
+// Функция, вызываемая после загрузки Telegram WebApp
+function onTelegramWebAppReady() {
+    console.log('Telegram WebApp загружен');
+
+    tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // Теперь инициализируем приложение
+    initializeApp();
 }
 
-// Обработка выбора пола
-buttons.gender.forEach(btn => {
-    btn.addEventListener('click', function() {
-        userData.gender = this.dataset.gender;
-        sendDataToBot({action: 'set_gender', gender: userData.gender});
-        showScreen('age');
-    });
-});
+// Инициализация приложения после загрузки Telegram API
+function initializeApp() {
+    // Получаем элементы DOM
+    const screens = {
+        gender: document.getElementById('gender-screen'),
+        age: document.getElementById('age-screen'),
+        search: document.getElementById('search-screen'),
+        chat: document.getElementById('chat-screen'),
+        profile: document.getElementById('profile-screen')
+    };
 
-// Отправка возраста
-buttons.ageSubmit.addEventListener('click', function() {
-    const age = parseInt(inputs.age.value);
-    if (age >= 10 && age <= 100) {
-        userData.age = age;
-        sendDataToBot({action: 'set_age', age: userData.age});
+    const buttons = {
+        gender: document.querySelectorAll('.gender-buttons .btn'),
+        search: document.querySelectorAll('.search-buttons .btn'),
+        nextChat: document.getElementById('next-chat'),
+        stopChat: document.getElementById('stop-chat'),
+        backToSearch: document.getElementById('back-to-search'),
+        ageSubmit: document.getElementById('age-submit'),
+        sendBtn: document.getElementById('send-btn')
+    };
+
+    const inputs = {
+        age: document.getElementById('age-input'),
+        message: document.getElementById('message-input')
+    };
+
+    const statusElements = {
+        chatStatus: document.getElementById('chat-status'),
+        vipStatus: document.getElementById('vip-status'),
+        messagesContainer: document.getElementById('messages-container')
+    };
+
+    const profileElements = {
+        gender: document.getElementById('profile-gender'),
+        age: document.getElementById('profile-age'),
+        search: document.getElementById('profile-search'),
+        vip: document.getElementById('profile-vip')
+    };
+
+    // Переключение экранов
+    function showScreen(screenName) {
+        Object.values(screens).forEach(screen => {
+            screen.classList.remove('active');
+        });
+        screens[screenName].classList.add('active');
+    }
+
+    // Обработка выбора пола
+    buttons.gender.forEach(btn => {
+        btn.addEventListener('click', function() {
+            userData.gender = this.dataset.gender;
+            console.log('Выбран пол:', userData.gender);
+            sendDataToBot({action: 'set_gender', gender: userData.gender});
+            showScreen('age');
+        });
+    });
+
+    // Отправка возраста
+    buttons.ageSubmit.addEventListener('click', function() {
+        const age = parseInt(inputs.age.value);
+        if (age >= 10 && age <= 100) {
+            userData.age = age;
+            sendDataToBot({action: 'set_age', age: userData.age});
+            showScreen('search');
+        } else {
+            alert('Введи нормальный возраст (10–100 лет)');
+        }
+    });
+
+    // Выбор типа поиска
+    buttons.search.forEach(btn => {
+        btn.addEventListener('click', function() {
+            userData.search = this.dataset.search;
+            sendDataToBot({action: 'set_search', search: userData.search});
+            showScreen('chat');
+            statusElements.chatStatus.textContent = 'Ищем собеседника...';
+        });
+    });
+
+    // Отправка сообщений в чате
+    buttons.sendBtn.addEventListener('click', function() {
+        const message = inputs.message.value.trim();
+        if (message) {
+            addMessage(message, 'my-message');
+            sendDataToBot({action: 'send_message', message: message});
+            inputs.message.value = '';
+        }
+    });
+
+    // Следующий собеседник
+    buttons.nextChat.addEventListener('click', function() {
+        sendDataToBot({action: 'next_chat'});
+        statusElements.chatStatus.textContent = 'Ищем нового собеседника...';
+    });
+
+    // Остановка чата
+    buttons.stopChat.addEventListener('click', function() {
+        sendDataToBot({action: 'stop_chat'});
         showScreen('search');
-    } else {
-        alert('Введи нормальный возраст (10–100 лет)');
-    }
-});
-
-// Выбор типа поиска
-buttons.search.forEach(btn => {
-    btn.addEventListener('click', function() {
-        userData.search = this.dataset.search;
-        sendDataToBot({action: 'set_search', search: userData.search});
-        showScreen('chat');
-        statusElements.chatStatus.textContent = 'Ищем собеседника...';
     });
-});
 
-// Отправка сообщений в чате
-buttons.sendBtn.addEventListener('click', function() {
-    const message = inputs.message.value.trim();
-    if (message) {
-        addMessage(message, 'my-message');
-        sendDataToBot({action: 'send_message', message: message});
-        inputs.message.value = '';
+    // Возврат к поиску из профиля
+    buttons.backToSearch.addEventListener('click', function() {
+        showScreen('search');
+    });
+
+    // Добавление сообщения в чат
+    function addMessage(text, className) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${className}`;
+        messageDiv.textContent = text;
+        statusElements.messagesContainer.appendChild(messageDiv);
+        statusElements.messagesContainer.scrollTop = statusElements.messagesContainer.scrollHeight;
     }
-});
 
-// Следующий собеседник
-buttons.nextChat.addEventListener('click', function() {
-    sendDataToBot({action: 'next_chat'});
-    statusElements.chatStatus.textContent = 'Ищем нового собеседника...';
-});
+    // Отправка данных боту
+    function sendDataToBot(data) {
+        console.log('Отправка данных боту:', data);
+        try {
+            tg.sendData(JSON.stringify(data));
+        } catch (error) {
+            console.error('Ошибка отправки данных:', error);
+        }
+    }
 
-// Остановка чата
-buttons.stopChat.addEventListener('click', function() {
-    sendDataToBot({action: 'stop_chat'});
-    showScreen('search');
-});
-
-// Возврат к поиску из профиля
-buttons.backToSearch.addEventListener('click', function() {
-    showScreen('search');
-});
-
-// Добавление сообщения в чат
-function addMessage(text, className) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${className}`;
-    messageDiv.textContent = text;
-    statusElements.messagesContainer.appendChild(messageDiv);
-    statusElements.messagesContainer.scrollTop = statusElements.messagesContainer.scrollHeight;
-}
-
-// Отправка данных боту
-function sendDataToBot(data) {
-    tg.sendData(JSON.stringify(data));
-}
-
-// Обработчик входящих данных от бота
-window.addEventListener('message', function(event) {
-    try {
-        const data = JSON.parse(event.data);
-
-        switch (data.action) {
-            case 'show_age_screen':
-                showScreen('age');
-                break;
-
-            case 'show_search_screen':
-                showScreen('search');
-                break;
-
+    // Обработчик входящих данных от бота
+    window.addEventListener('message', function(event) {
+        try {
+            const data = JSON.parse(event.data);
+            switch (data.action) {
+                case 'show_age_screen':
+                    showScreen('age');
+                    break;
+                case 'show_search_screen':
+                    showScreen('search');
+            break;
             case 'show_chat_screen':
                 showScreen('chat');
                 statusElements.chatStatus.textContent = data.status || 'Ищем собеседника...';
                 break;
-
             case 'update_chat_status':
                 statusElements.chatStatus.textContent = data.status;
                 break;
-
             case 'message_sent':
                 inputs.message.value = '';
                 break;
-
             case 'new_message':
                 addMessage(data.message, 'partner-message');
                 break;
-
             case 'chat_found':
                 statusElements.chatStatus.textContent = 'Собеседник найден!';
                 if (data.isVIP) {
@@ -420,11 +432,9 @@ window.addEventListener('message', function(event) {
                     statusElements.vipStatus.textContent = '';
                 }
                 break;
-
             case 'update_profile':
                 updateProfile(data.user);
                 break;
-
             case 'error':
                 alert(data.message);
                 break;
@@ -434,38 +444,26 @@ window.addEventListener('message', function(event) {
     }
 });
 
-// Обновление профиля
-function updateProfile(userData) {
-    profileElements.gender.textContent = userData.gender === 'male' ? 'Парень' : 'Девушка';
-    profileElements.age.textContent = userData.age;
-    profileElements.search.textContent =
-        userData.search === 'male' ? 'Парня' :
-        userData.search === 'female' ? 'Девушку' : 'Любого';
-    profileElements.vip.textContent = userData.isVIP ? 'Да' : 'Нет';
-    if (userData.isVIP) {
-        profileElements.vip.style.color = 'gold';
-        profileElements.vip.style.fontWeight = 'bold';
+    // Обновление профиля
+    function updateProfile(userData) {
+        profileElements.gender.textContent = userData.gender === 'male' ? 'Парень' : 'Девушка';
+        profileElements.age.textContent = userData.age;
+        profileElements.search.textContent =
+            userData.search === 'male' ? 'Парня' :
+            userData.search === 'female' ? 'Девушку' : 'Любого';
+        profileElements.vip.textContent = userData.isVIP ? 'Да' : 'Нет';
+        if (userData.isVIP) {
+            profileElements.vip.style.color = 'gold';
+            profileElements.vip.style.fontWeight = 'bold';
+        }
     }
 }
 
-// Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', function() {
-    // Получаем начальные данные пользователя
-    sendDataToBot({action: 'get_profile'});
+// Если Telegram WebApp уже загружен (например, при перезагрузке страницы)
+if (window.Telegram && window.Telegram.WebApp) {
+    onTelegramWebAppReady();
+}
 
-    // Добавляем кнопку профиля
-    const profileBtn = document.createElement('button');
-    profileBtn.className = 'btn';
-    profileBtn.textContent = '👤 Профиль';
-    profileBtn.style.position = 'fixed';
-    profileBtn.style.top = '16px';
-    profileBtn.style.right = '16px';
-    profileBtn.addEventListener('click', function() {
-        sendDataToBot({action: 'get_profile'});
-        showScreen('profile');
-    });
-    document.body.appendChild(profileBtn);
-});
-    </script>
+</script>
 </body>
 </html>
