@@ -41,7 +41,6 @@
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            color: transparent;  /* Добавляем fallback */
             margin-bottom: 8px;
         }
 
@@ -285,6 +284,49 @@
             font-size: 14px;
         }
 
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+        }
+
+        .gender-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .gender-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .gender-btn.active {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+        }
+
         .toast {
             position: fixed;
             bottom: 20px;
@@ -332,13 +374,11 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header">
             <h1>🤖 Анонимный Чат</h1>
             <p>Общайся с незнакомцами анонимно</p>
         </div>
 
-        <!-- Profile Card -->
         <div class="profile-card" id="profileCard">
             <div class="profile-header">
                 <div class="avatar" id="avatarIcon">👤</div>
@@ -348,6 +388,7 @@
                         <span class="vip-badge" id="vipBadge" style="display:none;">💎 VIP</span>
                     </h3>
                     <p id="userAge">Возраст не указан</p>
+                    <p id="userGenderText" style="font-size: 12px; opacity: 0.7;"></p>
                 </div>
             </div>
 
@@ -362,12 +403,11 @@
                 </div>
             </div>
 
-            <button class="btn btn-secondary" onclick="refreshProfile()">
-                🔄 Обновить профиль
+            <button class="btn btn-secondary" onclick="openProfileModal()">
+                ✏️ Заполнить профиль
             </button>
         </div>
 
-        <!-- Search Section -->
         <div class="search-section">
             <h3>🔎 Поиск собеседника</h3>
             <p style="color: rgba(255, 255, 255, 0.6); font-size: 14px; margin: 8px 0;">
@@ -395,7 +435,6 @@
             </button>
         </div>
 
-        <!-- Search Status -->
         <div class="chat-status" id="searchStatus" style="display:none;">
             <h3>🔍 Ищем собеседника...</h3>
             <div class="searching-animation">
@@ -408,7 +447,6 @@
             </p>
         </div>
 
-        <!-- VIP Banner -->
         <div style="text-align: center; margin: 20px 0;" id="vipBanner">
             <button class="btn btn-secondary" onclick="openVipModal()">
                 💎 Получить VIP
@@ -416,7 +454,34 @@
         </div>
     </div>
 
-    <!-- VIP Modal -->
+    <!-- Модальное окно редактирования профиля -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <h2>✏️ Заполните профиль</h2>
+            
+            <div class="input-group">
+                <label>👤 Ваш пол</label>
+                <div class="gender-buttons">
+                    <button class="gender-btn" onclick="selectGender('male')" id="genderMaleBtn">👦 Парень</button>
+                    <button class="gender-btn" onclick="selectGender('female')" id="genderFemaleBtn">👧 Девушка</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>📅 Ваш возраст</label>
+                <input type="number" id="ageInput" min="13" max="99" placeholder="От 13 до 99 лет">
+            </div>
+
+            <button class="btn btn-primary" onclick="saveProfile()">
+                💾 Сохранить
+            </button>
+            <button class="btn btn-secondary" onclick="closeProfileModal()">
+                ❌ Закрыть
+            </button>
+        </div>
+    </div>
+
+    <!-- VIP Modal с реквизитами -->
     <div class="modal" id="vipModal">
         <div class="modal-content">
             <h2>💎 VIP Подписка</h2>
@@ -428,7 +493,7 @@
                 <p><strong>💰 Цена:</strong> 300₽ / 1 месяц</p>
                 <p><strong>💳 Реквизиты:</strong> 2200 7012 4643 5322</p>
                 <p style="margin-top: 8px; font-size: 12px; color: rgba(255, 255, 255, 0.6);">
-                    После оплаты отправьте скриншот боту
+                    После оплаты отправьте скриншот @SupportBot
                 </p>
             </div>
 
@@ -441,114 +506,116 @@
         </div>
     </div>
 
-    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        // Инициализация Telegram Web App
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.ready();
 
-        // Состояние приложения
         let userData = {
-            id: tg.initDataUnsafe?.user?.id || null,
+            id: tg.initDataUnsafe?.user?.id || Date.now(),
             username: tg.initDataUnsafe?.user?.username || 'Гость',
             firstName: tg.initDataUnsafe?.user?.first_name || 'Пользователь',
             gender: null,
             age: null,
             search: 'any',
             isVip: false,
-            isSearching: false
+            isSearching: false,
+            chatCount: 0
         };
 
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', () => {
-            initApp();
-        });
-
-        function initApp() {
-            // Загрузка данных из Telegram
-            if (tg.initDataUnsafe?.user) {
-                userData.id = tg.initDataUnsafe.user.id;
-                userData.username = tg.initDataUnsafe.user.username || 'Гость';
-                userData.firstName = tg.initDataUnsafe.user.first_name || 'Пользователь';
+        // Загрузка сохраненных данных
+        function loadUserData() {
+            const saved = localStorage.getItem(`chat_user_${userData.id}`);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                userData.gender = parsed.gender || null;
+                userData.age = parsed.age || null;
+                userData.isVip = parsed.isVip || false;
+                userData.chatCount = parsed.chatCount || 0;
             }
-
             updateUI();
-            loadUserData();
+        }
+
+        function saveUserData() {
+            const toSave = {
+                gender: userData.gender,
+                age: userData.age,
+                isVip: userData.isVip,
+                chatCount: userData.chatCount
+            };
+            localStorage.setItem(`chat_user_${userData.id}`, JSON.stringify(toSave));
+            
+            // Отправка данных боту
+            tg.sendData(JSON.stringify({
+                action: 'update_profile',
+                ...toSave
+            }));
         }
 
         function updateUI() {
-            // Имя пользователя
-            document.getElementById('userName').textContent = 
-                userData.firstName || userData.username || 'Гость';
-
-            // Аватар
+            document.getElementById('userName').textContent = userData.firstName || userData.username;
+            
             const avatarIcon = document.getElementById('avatarIcon');
-            if (userData.gender === 'male') {
-                avatarIcon.textContent = '👦';
-            } else if (userData.gender === 'female') {
-                avatarIcon.textContent = '👧';
-            } else {
-                avatarIcon.textContent = '👤';
-            }
-
-            // Возраст
-            document.getElementById('userAge').textContent = 
-                userData.age ? `Возраст: ${userData.age} лет` : 'Возраст не указан';
-
-            // VIP бейдж
-            document.getElementById('vipBadge').style.display = 
-                userData.isVip ? 'inline-flex' : 'none';
-
-            // VIP баннер
-            document.getElementById('vipBanner').style.display = 
-                userData.isVip ? 'none' : 'block';
-
-            // Кнопки поиска
-            document.getElementById('searchBtn').style.display = 
-                userData.isSearching ? 'none' : 'block';
-            document.getElementById('stopBtn').style.display = 
-                userData.isSearching ? 'block' : 'none';
-
-            // Статус поиска
-            document.getElementById('searchStatus').style.display = 
-                userData.isSearching ? 'block' : 'none';
-
-            // Подсветка активной опции поиска
+            if (userData.gender === 'male') avatarIcon.textContent = '👦';
+            else if (userData.gender === 'female') avatarIcon.textContent = '👧';
+            else avatarIcon.textContent = '👤';
+            
+            document.getElementById('userAge').textContent = userData.age ? `Возраст: ${userData.age} лет` : 'Возраст не указан';
+            document.getElementById('userGenderText').textContent = userData.gender === 'male' ? '👦 Парень' : (userData.gender === 'female' ? '👧 Девушка' : 'Пол не указан');
+            
+            document.getElementById('vipBadge').style.display = userData.isVip ? 'inline-flex' : 'none';
+            document.getElementById('vipBanner').style.display = userData.isVip ? 'none' : 'block';
+            
+            document.getElementById('searchBtn').style.display = userData.isSearching ? 'none' : 'block';
+            document.getElementById('stopBtn').style.display = userData.isSearching ? 'block' : 'none';
+            document.getElementById('searchStatus').style.display = userData.isSearching ? 'block' : 'none';
+            
+            document.getElementById('chatCount').textContent = userData.chatCount;
+            
             document.querySelectorAll('.search-option').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.search === userData.search);
             });
         }
 
-        function loadUserData() {
-            // Здесь можно загрузить данные пользователя с сервера
-            // Пока используем localStorage для демонстрации
-            const saved = localStorage.getItem('userData');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if (parsed.id === userData.id) {
-                    userData = { ...userData, ...parsed };
-                }
-            }
-
-            // Установка основного цвета Telegram
-            tg.MainButton.hide();
-            updateUI();
+        function selectGender(gender) {
+            userData.gender = gender;
+            document.getElementById('genderMaleBtn').classList.toggle('active', gender === 'male');
+            document.getElementById('genderFemaleBtn').classList.toggle('active', gender === 'female');
         }
 
-        function saveUserData() {
-            localStorage.setItem('userData', JSON.stringify(userData));
-            // Отправка данных боту
-            if (tg.initDataUnsafe?.user) {
-                tg.sendData(JSON.stringify({
-                    action: 'update_profile',
-                    gender: userData.gender,
-                    age: userData.age,
-                    search: userData.search
-                }));
+        function openProfileModal() {
+            if (userData.gender === 'male') {
+                document.getElementById('genderMaleBtn').classList.add('active');
+            } else if (userData.gender === 'female') {
+                document.getElementById('genderFemaleBtn').classList.add('active');
             }
+            document.getElementById('ageInput').value = userData.age || '';
+            document.getElementById('profileModal').classList.add('active');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('active');
+        }
+
+        function saveProfile() {
+            const age = parseInt(document.getElementById('ageInput').value);
+            if (age && (age < 13 || age > 99)) {
+                showToast('❌ Возраст должен быть от 13 до 99 лет');
+                return;
+            }
+            if (!userData.gender) {
+                showToast('❌ Выберите ваш пол');
+                return;
+            }
+            
+            userData.age = age || null;
+            saveUserData();
+            updateUI();
+            closeProfileModal();
+            showToast('✅ Профиль сохранен!');
         }
 
         function setSearch(type) {
@@ -559,44 +626,41 @@
 
         function startSearch() {
             if (!userData.gender || !userData.age) {
-                showToast('⚠️ Сначала заполните профиль в боте');
+                showToast('⚠️ Сначала заполните профиль');
+                openProfileModal();
                 return;
             }
 
             userData.isSearching = true;
             updateUI();
 
-            // Отправка команды поиска боту
             tg.sendData(JSON.stringify({
                 action: 'start_search',
-                search: userData.search
+                search: userData.search,
+                user_gender: userData.gender,
+                user_age: userData.age
             }));
 
             showToast('🔍 Поиск собеседника...');
 
-            // Имитация поиска (в реальном приложении - через WebSocket)
+            // Имитация поиска (замените на реальный WebSocket)
             setTimeout(() => {
-                userData.isSearching = false;
-                updateUI();
-                showToast('✅ Собеседник найден! Вернитесь в чат');
+                if (userData.isSearching) {
+                    userData.isSearching = false;
+                    userData.chatCount++;
+                    saveUserData();
+                    updateUI();
+                    showToast('✅ Собеседник найден! Чат открыт');
+                    tg.sendData(JSON.stringify({ action: 'chat_started' }));
+                }
             }, 3000);
         }
 
         function stopSearch() {
             userData.isSearching = false;
             updateUI();
-
-            tg.sendData(JSON.stringify({
-                action: 'stop_search'
-            }));
-
+            tg.sendData(JSON.stringify({ action: 'stop_search' }));
             showToast('❌ Поиск остановлен');
-        }
-
-        function refreshProfile() {
-            loadUserData();
-            updateUI();
-            showToast('🔄 Профиль обновлен');
         }
 
         function openVipModal() {
@@ -612,40 +676,38 @@
             try {
                 await navigator.clipboard.writeText(paymentInfo);
                 showToast('📋 Реквизиты скопированы');
+                setTimeout(() => closeVipModal(), 1000);
             } catch (err) {
                 showToast('❌ Не удалось скопировать');
             }
-            closeVipModal();
         }
 
         function showToast(message) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2000);
+            setTimeout(() => toast.classList.remove('show'), 2000);
         }
 
-        // Обработка ответа от бота
-        tg.onEvent('mainButtonClicked', () => {
-            tg.sendData(JSON.stringify({
-                action: 'main_button_clicked'
-            }));
+        // Онлайн пользователи (имитация)
+        setInterval(() => {
+            const online = Math.floor(Math.random() * 200) + 50;
+            document.getElementById('onlineCount').textContent = online;
+        }, 10000);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserData();
+            updateUI();
+            document.getElementById('onlineCount').textContent = Math.floor(Math.random() * 150) + 50;
         });
 
-        // Закрытие Web App
-        tg.onEvent('viewportChanged', (event) => {
-            if (event.isStateStable) {
-                updateUI();
-            }
-        });
-
-        // Экспорт функций для использования в HTML
         window.setSearch = setSearch;
         window.startSearch = startSearch;
         window.stopSearch = stopSearch;
-        window.refreshProfile = refreshProfile;
+        window.openProfileModal = openProfileModal;
+        window.closeProfileModal = closeProfileModal;
+        window.saveProfile = saveProfile;
+        window.selectGender = selectGender;
         window.openVipModal = openVipModal;
         window.closeVipModal = closeVipModal;
         window.copyPaymentInfo = copyPaymentInfo;
