@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -225,12 +226,26 @@
             animation: pulse 1.5s infinite;
         }
 
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
 
         @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.5); opacity: 1; }
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.5);
+                opacity: 1;
+            }
         }
 
         .modal {
@@ -346,6 +361,7 @@
                 transform: translateX(-50%) translateY(20px);
                 opacity: 0;
             }
+
             to {
                 transform: translateX(-50%) translateY(0);
                 opacity: 1;
@@ -353,13 +369,25 @@
         }
 
         @media (max-width: 480px) {
-            body { padding: 12px; }
-            .header h1 { font-size: 24px; }
-            .search-options { flex-direction: column; }
-            .gender-buttons { flex-direction: column; }
+            body {
+                padding: 12px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .search-options {
+                flex-direction: column;
+            }
+
+            .gender-buttons {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -440,7 +468,7 @@
     <div class="modal" id="profileModal">
         <div class="modal-content">
             <h2>✏️ Заполните профиль</h2>
-            
+
             <div class="input-group">
                 <label>👤 Ваш пол</label>
                 <div class="gender-buttons">
@@ -490,6 +518,8 @@
 
     <div class="toast" id="toast"></div>
 
+
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         // Инициализация Telegram Web App
@@ -521,7 +551,7 @@
                     userData.isVip = parsed.isVip || false;
                     userData.chatCount = parsed.chatCount || 0;
                     userData.search = parsed.search || 'any';
-                } catch(e) {
+                } catch (e) {
                     console.error('Ошибка загрузки:', e);
                 }
             }
@@ -544,16 +574,16 @@
         function updateUI() {
             // Имя
             document.getElementById('userName').textContent = userData.firstName || userData.username;
-            
+
             // Аватар
             const avatarIcon = document.getElementById('avatarIcon');
             if (userData.gender === 'male') avatarIcon.textContent = '👦';
             else if (userData.gender === 'female') avatarIcon.textContent = '👧';
             else avatarIcon.textContent = '👤';
-            
+
             // Возраст
             document.getElementById('userAge').textContent = userData.age ? `Возраст: ${userData.age} лет` : 'Возраст не указан';
-            
+
             // Пол текст
             const genderText = document.getElementById('userGenderText');
             if (genderText) {
@@ -561,22 +591,22 @@
                 else if (userData.gender === 'female') genderText.textContent = '👧 Девушка';
                 else genderText.textContent = 'Пол не указан';
             }
-            
+
             // VIP бейдж
             document.getElementById('vipBadge').style.display = userData.isVip ? 'inline-flex' : 'none';
-            
+
             // VIP баннер
             const vipBanner = document.getElementById('vipBanner');
             if (vipBanner) vipBanner.style.display = userData.isVip ? 'none' : 'block';
-            
+
             // Кнопки поиска
             document.getElementById('searchBtn').style.display = userData.isSearching ? 'none' : 'block';
             document.getElementById('stopBtn').style.display = userData.isSearching ? 'block' : 'none';
             document.getElementById('searchStatus').style.display = userData.isSearching ? 'block' : 'none';
-            
+
             // Счетчик чатов
             document.getElementById('chatCount').textContent = userData.chatCount;
-            
+
             // Подсветка активной опции поиска
             document.querySelectorAll('.search-option').forEach(btn => {
                 if (btn.dataset.search === userData.search) {
@@ -591,14 +621,13 @@
         function initGenderButtons() {
             const genderBtns = document.querySelectorAll('.gender-btn');
             genderBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', function () {
                     const gender = this.dataset.gender;
                     userData.gender = gender;
-                    
-                    // Обновляем активные кнопки
+
                     genderBtns.forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
-                    
+
                     showToast(`Выбран пол: ${gender === 'male' ? 'Парень' : 'Девушка'}`);
                 });
             });
@@ -620,10 +649,10 @@
         function openProfileModal() {
             const modal = document.getElementById('profileModal');
             const ageInput = document.getElementById('ageInput');
-            
+
             if (modal) modal.classList.add('active');
             if (ageInput) ageInput.value = userData.age || '';
-            
+
             updateGenderButtonsInModal();
         }
 
@@ -637,23 +666,23 @@
         function saveProfile() {
             const ageInput = document.getElementById('ageInput');
             const age = parseInt(ageInput?.value);
-            
+
             if (age && (age < 13 || age > 99)) {
                 showToast('❌ Возраст должен быть от 13 до 99 лет');
                 return;
             }
-            
+
             if (!userData.gender) {
                 showToast('❌ Выберите ваш пол');
                 return;
             }
-            
+
             userData.age = age || null;
             saveUserData();
             updateUI();
             closeProfileModal();
             showToast('✅ Профиль сохранен!');
-            
+
             // Отправляем данные боту
             tg.sendData(JSON.stringify({
                 action: 'update_profile',
@@ -667,57 +696,59 @@
         function initSearchOptions() {
             const searchOptions = document.querySelectorAll('.search-option');
             searchOptions.forEach(option => {
-                option.addEventListener('click', function() {
+                option.addEventListener('click', function () {
                     const searchType = this.dataset.search;
                     userData.search = searchType;
                     saveUserData();
                     updateUI();
-                    
+
                     const typeName = searchType === 'male' ? 'Парней' : searchType === 'female' ? 'Девушек' : 'Любых';
                     showToast(`Поиск: ${typeName}`);
+
+                    // Отправляем боту
+                    tg.sendData(JSON.stringify({
+                        action: 'set_search',
+                        search: searchType
+                    }));
                 });
             });
         }
 
-        // Начать поиск
+        // Начать поиск - ОТПРАВЛЯЕМ ЗАПРОС БОТУ, БЕЗ ИМИТАЦИИ
         function startSearch() {
             if (!userData.gender || !userData.age) {
                 showToast('⚠️ Сначала заполните профиль');
                 openProfileModal();
                 return;
             }
-            
+
             userData.isSearching = true;
             updateUI();
-            
-            // Отправляем боту
+
+            // Отправляем реальный запрос боту
             tg.sendData(JSON.stringify({
                 action: 'start_search',
                 search: userData.search,
                 user_gender: userData.gender,
                 user_age: userData.age
             }));
-            
-            showToast('🔍 Ищем собеседника...');
-            
-            // Имитация поиска (3 секунды)
-            setTimeout(() => {
-                if (userData.isSearching) {
-                    userData.isSearching = false;
-                    userData.chatCount++;
-                    saveUserData();
-                    updateUI();
-                    showToast('✅ Собеседник найден! Общайтесь в Telegram');
-                    tg.sendData(JSON.stringify({ action: 'chat_started' }));
-                }
-            }, 3000);
+
+            showToast('🔍 Поиск начат, ожидайте собеседника...');
+
+            // Сохраняем статус поиска
+            localStorage.setItem(`searching_${userData.id}`, 'true');
         }
 
         // Остановить поиск
         function stopSearch() {
             userData.isSearching = false;
             updateUI();
-            tg.sendData(JSON.stringify({ action: 'stop_search' }));
+
+            tg.sendData(JSON.stringify({
+                action: 'stop_search'
+            }));
+
+            localStorage.removeItem(`searching_${userData.id}`);
             showToast('❌ Поиск остановлен');
         }
 
@@ -736,7 +767,6 @@
             try {
                 await navigator.clipboard.writeText(paymentInfo);
                 showToast('📋 Реквизиты скопированы');
-                setTimeout(() => closeVipModal(), 1000);
             } catch (err) {
                 showToast('❌ Не удалось скопировать');
             }
@@ -750,39 +780,25 @@
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
 
-        // Онлайн счетчик
+        // Реальное количество онлайн (запрашиваем у бота)
         function updateOnlineCount() {
-            const online = Math.floor(Math.random() * 200) + 50;
-            document.getElementById('onlineCount').textContent = online;
+            // Запрашиваем у бота реальное количество онлайн
+            tg.sendData(JSON.stringify({
+                action: 'get_online_count'
+            }));
         }
 
         // Инициализация всех событий
         function initEventListeners() {
-            // Кнопка редактирования профиля
             document.getElementById('editProfileBtn').addEventListener('click', openProfileModal);
-            
-            // Кнопка закрытия профиля
             document.getElementById('closeProfileBtn').addEventListener('click', closeProfileModal);
-            
-            // Кнопка сохранения профиля
             document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
-            
-            // Кнопка поиска
             document.getElementById('searchBtn').addEventListener('click', startSearch);
-            
-            // Кнопка остановки
             document.getElementById('stopBtn').addEventListener('click', stopSearch);
-            
-            // Кнопка VIP
             document.getElementById('vipBtn').addEventListener('click', openVipModal);
-            
-            // Кнопка закрытия VIP
             document.getElementById('closeVipBtn').addEventListener('click', closeVipModal);
-            
-            // Кнопка копирования реквизитов
             document.getElementById('copyPaymentBtn').addEventListener('click', copyPaymentInfo);
-            
-            // Закрытие модалок по клику вне
+
             document.querySelectorAll('.modal').forEach(modal => {
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal) {
@@ -790,23 +806,32 @@
                     }
                 });
             });
-            
-            // Инициализация кнопок пола
+
             initGenderButtons();
-            
-            // Инициализация опций поиска
             initSearchOptions();
+        }
+
+        // Проверяем статус поиска при загрузке
+        function checkSearchStatus() {
+            const wasSearching = localStorage.getItem(`searching_${userData.id}`);
+            if (wasSearching === 'true') {
+                userData.isSearching = true;
+                updateUI();
+                showToast('🔍 Поиск активен...');
+            }
         }
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', () => {
             loadUserData();
             updateUI();
-            updateOnlineCount();
             initEventListeners();
-            setInterval(updateOnlineCount, 30000);
-            
-            // Сообщаем боту что приложение загружено
+            checkSearchStatus();
+
+            // Обновляем онлайн каждые 10 секунд
+            updateOnlineCount();
+            setInterval(updateOnlineCount, 10000);
+
             tg.sendData(JSON.stringify({
                 action: 'app_loaded',
                 user_id: userData.id
@@ -814,4 +839,5 @@
         });
     </script>
 </body>
+
 </html>
