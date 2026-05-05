@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -231,14 +232,22 @@
             animation: pulse 1.5s infinite;
         }
 
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
 
         @keyframes pulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: scale(1);
                 opacity: 0.5;
             }
+
             50% {
                 transform: scale(1.5);
                 opacity: 1;
@@ -351,6 +360,7 @@
                 transform: translateX(-50%) translateY(20px);
                 opacity: 0;
             }
+
             to {
                 transform: translateX(-50%) translateY(0);
                 opacity: 1;
@@ -361,17 +371,18 @@
             body {
                 padding: 12px;
             }
-            
+
             .header h1 {
                 font-size: 24px;
             }
-            
+
             .search-options {
                 flex-direction: column;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -458,7 +469,7 @@
     <div class="modal" id="profileModal">
         <div class="modal-content">
             <h2>✏️ Заполните профиль</h2>
-            
+
             <div class="input-group">
                 <label>👤 Ваш пол</label>
                 <div class="gender-buttons">
@@ -510,12 +521,14 @@
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
+        // Инициализация Telegram Web App
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.ready();
 
+        // Состояние приложения
         let userData = {
-            id: tg.initDataUnsafe?.user?.id || Date.now(),
+            id: tg.initDataUnsafe?.user?.id || null,
             username: tg.initDataUnsafe?.user?.username || 'Гость',
             firstName: tg.initDataUnsafe?.user?.first_name || 'Пользователь',
             gender: null,
@@ -526,7 +539,7 @@
             chatCount: 0
         };
 
-        // Загрузка сохраненных данных
+        // Загрузка сохраненных данных из localStorage
         function loadUserData() {
             const saved = localStorage.getItem(`chat_user_${userData.id}`);
             if (saved) {
@@ -535,95 +548,173 @@
                 userData.age = parsed.age || null;
                 userData.isVip = parsed.isVip || false;
                 userData.chatCount = parsed.chatCount || 0;
+                userData.search = parsed.search || 'any';
             }
             updateUI();
         }
 
+        // Сохранение данных в localStorage
         function saveUserData() {
             const toSave = {
                 gender: userData.gender,
                 age: userData.age,
                 isVip: userData.isVip,
-                chatCount: userData.chatCount
+                chatCount: userData.chatCount,
+                search: userData.search
             };
             localStorage.setItem(`chat_user_${userData.id}`, JSON.stringify(toSave));
-            
-            // Отправка данных боту
-            tg.sendData(JSON.stringify({
-                action: 'update_profile',
-                ...toSave
-            }));
         }
 
+        // Обновление интерфейса
         function updateUI() {
-            document.getElementById('userName').textContent = userData.firstName || userData.username;
-            
+            // Имя пользователя
+            document.getElementById('userName').textContent = userData.firstName || userData.username || 'Гость';
+
+            // Аватар
             const avatarIcon = document.getElementById('avatarIcon');
-            if (userData.gender === 'male') avatarIcon.textContent = '👦';
-            else if (userData.gender === 'female') avatarIcon.textContent = '👧';
-            else avatarIcon.textContent = '👤';
-            
-            document.getElementById('userAge').textContent = userData.age ? `Возраст: ${userData.age} лет` : 'Возраст не указан';
-            document.getElementById('userGenderText').textContent = userData.gender === 'male' ? '👦 Парень' : (userData.gender === 'female' ? '👧 Девушка' : 'Пол не указан');
-            
-            document.getElementById('vipBadge').style.display = userData.isVip ? 'inline-flex' : 'none';
-            document.getElementById('vipBanner').style.display = userData.isVip ? 'none' : 'block';
-            
-            document.getElementById('searchBtn').style.display = userData.isSearching ? 'none' : 'block';
-            document.getElementById('stopBtn').style.display = userData.isSearching ? 'block' : 'none';
-            document.getElementById('searchStatus').style.display = userData.isSearching ? 'block' : 'none';
-            
-            document.getElementById('chatCount').textContent = userData.chatCount;
-            
+            if (userData.gender === 'male') {
+                avatarIcon.textContent = '👦';
+            } else if (userData.gender === 'female') {
+                avatarIcon.textContent = '👧';
+            } else {
+                avatarIcon.textContent = '👤';
+            }
+
+            // Возраст
+            const ageText = userData.age ? `Возраст: ${userData.age} лет` : 'Возраст не указан';
+            document.getElementById('userAge').textContent = ageText;
+
+            // Пол текст
+            const genderText = document.getElementById('userGenderText');
+            if (genderText) {
+                if (userData.gender === 'male') {
+                    genderText.textContent = '👦 Парень';
+                } else if (userData.gender === 'female') {
+                    genderText.textContent = '👧 Девушка';
+                } else {
+                    genderText.textContent = 'Пол не указан';
+                }
+            }
+
+            // VIP бейдж
+            const vipBadge = document.getElementById('vipBadge');
+            if (vipBadge) {
+                vipBadge.style.display = userData.isVip ? 'inline-flex' : 'none';
+            }
+
+            // VIP баннер
+            const vipBanner = document.getElementById('vipBanner');
+            if (vipBanner) {
+                vipBanner.style.display = userData.isVip ? 'none' : 'block';
+            }
+
+            // Кнопки поиска
+            const searchBtn = document.getElementById('searchBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const searchStatus = document.getElementById('searchStatus');
+
+            if (searchBtn) searchBtn.style.display = userData.isSearching ? 'none' : 'block';
+            if (stopBtn) stopBtn.style.display = userData.isSearching ? 'block' : 'none';
+            if (searchStatus) searchStatus.style.display = userData.isSearching ? 'block' : 'none';
+
+            // Счетчик чатов
+            const chatCount = document.getElementById('chatCount');
+            if (chatCount) chatCount.textContent = userData.chatCount;
+
+            // Подсветка активной опции поиска
             document.querySelectorAll('.search-option').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.search === userData.search);
+                if (btn.dataset.search === userData.search) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
             });
         }
 
+        // Установка пола
         function selectGender(gender) {
             userData.gender = gender;
-            document.getElementById('genderMaleBtn').classList.toggle('active', gender === 'male');
-            document.getElementById('genderFemaleBtn').classList.toggle('active', gender === 'female');
+            const maleBtn = document.getElementById('genderMaleBtn');
+            const femaleBtn = document.getElementById('genderFemaleBtn');
+
+            if (maleBtn) maleBtn.classList.toggle('active', gender === 'male');
+            if (femaleBtn) femaleBtn.classList.toggle('active', gender === 'female');
         }
 
+        // Открытие модального окна профиля
         function openProfileModal() {
-            if (userData.gender === 'male') {
-                document.getElementById('genderMaleBtn').classList.add('active');
-            } else if (userData.gender === 'female') {
-                document.getElementById('genderFemaleBtn').classList.add('active');
+            const modal = document.getElementById('profileModal');
+            const ageInput = document.getElementById('ageInput');
+            const maleBtn = document.getElementById('genderMaleBtn');
+            const femaleBtn = document.getElementById('genderFemaleBtn');
+
+            if (modal) modal.classList.add('active');
+            if (ageInput) ageInput.value = userData.age || '';
+
+            if (maleBtn && femaleBtn) {
+                if (userData.gender === 'male') {
+                    maleBtn.classList.add('active');
+                    femaleBtn.classList.remove('active');
+                } else if (userData.gender === 'female') {
+                    femaleBtn.classList.add('active');
+                    maleBtn.classList.remove('active');
+                } else {
+                    maleBtn.classList.remove('active');
+                    femaleBtn.classList.remove('active');
+                }
             }
-            document.getElementById('ageInput').value = userData.age || '';
-            document.getElementById('profileModal').classList.add('active');
         }
 
+        // Закрытие модального окна профиля
         function closeProfileModal() {
-            document.getElementById('profileModal').classList.remove('active');
+            const modal = document.getElementById('profileModal');
+            if (modal) modal.classList.remove('active');
         }
 
+        // Сохранение профиля
         function saveProfile() {
-            const age = parseInt(document.getElementById('ageInput').value);
+            const ageInput = document.getElementById('ageInput');
+            const age = parseInt(ageInput?.value);
+
             if (age && (age < 13 || age > 99)) {
                 showToast('❌ Возраст должен быть от 13 до 99 лет');
                 return;
             }
+
             if (!userData.gender) {
                 showToast('❌ Выберите ваш пол');
                 return;
             }
-            
+
             userData.age = age || null;
             saveUserData();
             updateUI();
             closeProfileModal();
             showToast('✅ Профиль сохранен!');
+
+            // Отправляем данные боту
+            tg.sendData(JSON.stringify({
+                action: 'update_profile',
+                gender: userData.gender,
+                age: userData.age,
+                search: userData.search
+            }));
         }
 
+        // Установка параметров поиска
         function setSearch(type) {
             userData.search = type;
             saveUserData();
             updateUI();
+
+            // Отправляем боту
+            tg.sendData(JSON.stringify({
+                action: 'set_search',
+                search: type
+            }));
         }
 
+        // Начало поиска
         function startSearch() {
             if (!userData.gender || !userData.age) {
                 showToast('⚠️ Сначала заполните профиль');
@@ -634,6 +725,7 @@
             userData.isSearching = true;
             updateUI();
 
+            // Отправляем команду поиска боту
             tg.sendData(JSON.stringify({
                 action: 'start_search',
                 search: userData.search,
@@ -641,36 +733,42 @@
                 user_age: userData.age
             }));
 
-            showToast('🔍 Поиск собеседника...');
+            showToast('🔍 Ищем собеседника...');
 
-            // Имитация поиска (замените на реальный WebSocket)
+            // Таймаут для автоматической остановки поиска (5 минут)
             setTimeout(() => {
                 if (userData.isSearching) {
-                    userData.isSearching = false;
-                    userData.chatCount++;
-                    saveUserData();
-                    updateUI();
-                    showToast('✅ Собеседник найден! Чат открыт');
-                    tg.sendData(JSON.stringify({ action: 'chat_started' }));
+                    stopSearch();
+                    showToast('⏰ Время поиска истекло');
                 }
-            }, 3000);
+            }, 300000);
         }
 
+        // Остановка поиска
         function stopSearch() {
             userData.isSearching = false;
             updateUI();
-            tg.sendData(JSON.stringify({ action: 'stop_search' }));
+
+            tg.sendData(JSON.stringify({
+                action: 'stop_search'
+            }));
+
             showToast('❌ Поиск остановлен');
         }
 
+        // Открытие VIP модального окна
         function openVipModal() {
-            document.getElementById('vipModal').classList.add('active');
+            const modal = document.getElementById('vipModal');
+            if (modal) modal.classList.add('active');
         }
 
+        // Закрытие VIP модального окна
         function closeVipModal() {
-            document.getElementById('vipModal').classList.remove('active');
+            const modal = document.getElementById('vipModal');
+            if (modal) modal.classList.remove('active');
         }
 
+        // Копирование платежных реквизитов
         async function copyPaymentInfo() {
             const paymentInfo = '2200 7012 4643 5322';
             try {
@@ -682,28 +780,81 @@
             }
         }
 
-        function showToast(message) {
+        // Показ уведомления
+        function showToast(message, duration = 2000) {
             const toast = document.getElementById('toast');
+            if (!toast) return;
+
             toast.textContent = message;
             toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
         }
 
-        // Онлайн пользователи (имитация)
-        setInterval(() => {
-            const online = Math.floor(Math.random() * 200) + 50;
-            document.getElementById('onlineCount').textContent = online;
-        }, 10000);
+        // Обновление профиля (кнопка)
+        function refreshProfile() {
+            loadUserData();
+            updateUI();
+            showToast('🔄 Профиль обновлен');
+        }
 
+        // Получение статистики с сервера
+        async function loadStats() {
+            try {
+                // Имитация получения онлайн пользователей
+                const online = Math.floor(Math.random() * 200) + 50;
+                const onlineCount = document.getElementById('onlineCount');
+                if (onlineCount) onlineCount.textContent = online;
+            } catch (error) {
+                console.error('Ошибка загрузки статистики:', error);
+            }
+        }
+
+        // Обработка данных от бота
+        tg.onEvent('mainButtonClicked', () => {
+            console.log('Main button clicked');
+        });
+
+        // Обработка закрытия Web App
+        tg.onEvent('viewportChanged', (event) => {
+            if (event.isStateStable) {
+                updateUI();
+            }
+        });
+
+        // Инициализация приложения
         document.addEventListener('DOMContentLoaded', () => {
             loadUserData();
             updateUI();
-            document.getElementById('onlineCount').textContent = Math.floor(Math.random() * 150) + 50;
+            loadStats();
+
+            // Обновляем статистику каждые 30 секунд
+            setInterval(loadStats, 30000);
+
+            // Закрытие модальных окон при клике вне их
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
+            });
+
+            // Отправка события о загрузке приложения
+            tg.sendData(JSON.stringify({
+                action: 'app_loaded',
+                user_id: userData.id
+            }));
         });
 
+        // Экспорт функций в глобальную область видимости
         window.setSearch = setSearch;
         window.startSearch = startSearch;
         window.stopSearch = stopSearch;
+        window.refreshProfile = refreshProfile;
         window.openProfileModal = openProfileModal;
         window.closeProfileModal = closeProfileModal;
         window.saveProfile = saveProfile;
@@ -713,4 +864,5 @@
         window.copyPaymentInfo = copyPaymentInfo;
     </script>
 </body>
+
 </html>
