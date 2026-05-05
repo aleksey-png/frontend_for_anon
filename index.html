@@ -56,7 +56,6 @@
             margin-bottom: 20px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            transition: all 0.3s ease;
         }
 
         .profile-header {
@@ -230,14 +229,8 @@
         .dot:nth-child(3) { animation-delay: 0.4s; }
 
         @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-                opacity: 0.5;
-            }
-            50% {
-                transform: scale(1.5);
-                opacity: 1;
-            }
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.5); opacity: 1; }
         }
 
         .modal {
@@ -360,21 +353,10 @@
         }
 
         @media (max-width: 480px) {
-            body {
-                padding: 12px;
-            }
-            
-            .header h1 {
-                font-size: 24px;
-            }
-            
-            .search-options {
-                flex-direction: column;
-            }
-            
-            .gender-buttons {
-                flex-direction: column;
-            }
+            body { padding: 12px; }
+            .header h1 { font-size: 24px; }
+            .search-options { flex-direction: column; }
+            .gender-buttons { flex-direction: column; }
         }
     </style>
 </head>
@@ -409,7 +391,7 @@
                 </div>
             </div>
 
-            <button class="btn btn-secondary" onclick="openProfileModal()">
+            <button class="btn btn-secondary" id="editProfileBtn">
                 ✏️ Заполнить профиль
             </button>
         </div>
@@ -421,22 +403,16 @@
             </p>
 
             <div class="search-options">
-                <button class="search-option" data-search="male" onclick="setSearch('male')">
-                    👦 Парень
-                </button>
-                <button class="search-option" data-search="female" onclick="setSearch('female')">
-                    👧 Девушка
-                </button>
-                <button class="search-option active" data-search="any" onclick="setSearch('any')">
-                    🔀 Любой
-                </button>
+                <button class="search-option" data-search="male">👦 Парень</button>
+                <button class="search-option" data-search="female">👧 Девушка</button>
+                <button class="search-option active" data-search="any">🔀 Любой</button>
             </div>
 
-            <button class="btn btn-primary" id="searchBtn" onclick="startSearch()">
+            <button class="btn btn-primary" id="searchBtn">
                 🚀 Начать поиск
             </button>
 
-            <button class="btn btn-danger" id="stopBtn" style="display:none;" onclick="stopSearch()">
+            <button class="btn btn-danger" id="stopBtn" style="display:none;">
                 ❌ Остановить поиск
             </button>
         </div>
@@ -454,7 +430,7 @@
         </div>
 
         <div style="text-align: center; margin: 20px 0;" id="vipBanner">
-            <button class="btn btn-secondary" onclick="openVipModal()">
+            <button class="btn btn-secondary" id="vipBtn">
                 💎 Получить VIP
             </button>
         </div>
@@ -468,8 +444,8 @@
             <div class="input-group">
                 <label>👤 Ваш пол</label>
                 <div class="gender-buttons">
-                    <button class="gender-btn" id="genderMaleBtn" onclick="selectGender('male')">👦 Парень</button>
-                    <button class="gender-btn" id="genderFemaleBtn" onclick="selectGender('female')">👧 Девушка</button>
+                    <button class="gender-btn" data-gender="male">👦 Парень</button>
+                    <button class="gender-btn" data-gender="female">👧 Девушка</button>
                 </div>
             </div>
 
@@ -478,10 +454,10 @@
                 <input type="number" id="ageInput" min="13" max="99" placeholder="От 13 до 99 лет">
             </div>
 
-            <button class="btn btn-primary" onclick="saveProfile()">
+            <button class="btn btn-primary" id="saveProfileBtn">
                 💾 Сохранить
             </button>
-            <button class="btn btn-secondary" onclick="closeProfileModal()">
+            <button class="btn btn-secondary" id="closeProfileBtn">
                 ❌ Закрыть
             </button>
         </div>
@@ -499,14 +475,14 @@
                 <p><strong>💰 Цена:</strong> 300₽ / 1 месяц</p>
                 <p><strong>💳 Реквизиты:</strong> 2200 7012 4643 5322</p>
                 <p style="margin-top: 8px; font-size: 12px; color: rgba(255, 255, 255, 0.6);">
-                    После оплаты отправьте скриншот @SupportBot
+                    После оплаты отправьте скриншот в этот чат
                 </p>
             </div>
 
-            <button class="btn btn-primary" onclick="copyPaymentInfo()">
+            <button class="btn btn-primary" id="copyPaymentBtn">
                 📋 Скопировать реквизиты
             </button>
-            <button class="btn btn-secondary" onclick="closeVipModal()">
+            <button class="btn btn-secondary" id="closeVipBtn">
                 ❌ Закрыть
             </button>
         </div>
@@ -611,25 +587,33 @@
             });
         }
 
-        // Выбор пола
-        function selectGender(gender) {
-            userData.gender = gender;
-            
-            // Обновляем активные кнопки
-            const maleBtn = document.getElementById('genderMaleBtn');
-            const femaleBtn = document.getElementById('genderFemaleBtn');
-            
-            if (maleBtn && femaleBtn) {
-                if (gender === 'male') {
-                    maleBtn.classList.add('active');
-                    femaleBtn.classList.remove('active');
+        // Выбор пола в модалке
+        function initGenderButtons() {
+            const genderBtns = document.querySelectorAll('.gender-btn');
+            genderBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const gender = this.dataset.gender;
+                    userData.gender = gender;
+                    
+                    // Обновляем активные кнопки
+                    genderBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    showToast(`Выбран пол: ${gender === 'male' ? 'Парень' : 'Девушка'}`);
+                });
+            });
+        }
+
+        // Обновить активную кнопку пола в модалке
+        function updateGenderButtonsInModal() {
+            const genderBtns = document.querySelectorAll('.gender-btn');
+            genderBtns.forEach(btn => {
+                if (btn.dataset.gender === userData.gender) {
+                    btn.classList.add('active');
                 } else {
-                    femaleBtn.classList.add('active');
-                    maleBtn.classList.remove('active');
+                    btn.classList.remove('active');
                 }
-            }
-            
-            showToast(`Выбран пол: ${gender === 'male' ? 'Парень' : 'Девушка'}`);
+            });
         }
 
         // Открыть модалку профиля
@@ -640,22 +624,7 @@
             if (modal) modal.classList.add('active');
             if (ageInput) ageInput.value = userData.age || '';
             
-            // Обновляем активные кнопки пола
-            const maleBtn = document.getElementById('genderMaleBtn');
-            const femaleBtn = document.getElementById('genderFemaleBtn');
-            
-            if (maleBtn && femaleBtn) {
-                if (userData.gender === 'male') {
-                    maleBtn.classList.add('active');
-                    femaleBtn.classList.remove('active');
-                } else if (userData.gender === 'female') {
-                    femaleBtn.classList.add('active');
-                    maleBtn.classList.remove('active');
-                } else {
-                    maleBtn.classList.remove('active');
-                    femaleBtn.classList.remove('active');
-                }
-            }
+            updateGenderButtonsInModal();
         }
 
         // Закрыть модалку профиля
@@ -695,11 +664,19 @@
         }
 
         // Установка поиска
-        function setSearch(type) {
-            userData.search = type;
-            saveUserData();
-            updateUI();
-            showToast(`Поиск: ${type === 'male' ? 'Парней' : type === 'female' ? 'Девушек' : 'Любых'}`);
+        function initSearchOptions() {
+            const searchOptions = document.querySelectorAll('.search-option');
+            searchOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const searchType = this.dataset.search;
+                    userData.search = searchType;
+                    saveUserData();
+                    updateUI();
+                    
+                    const typeName = searchType === 'male' ? 'Парней' : searchType === 'female' ? 'Девушек' : 'Любых';
+                    showToast(`Поиск: ${typeName}`);
+                });
+            });
         }
 
         // Начать поиск
@@ -779,20 +756,54 @@
             document.getElementById('onlineCount').textContent = online;
         }
 
-        // Закрытие модалки по клику вне
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                }
+        // Инициализация всех событий
+        function initEventListeners() {
+            // Кнопка редактирования профиля
+            document.getElementById('editProfileBtn').addEventListener('click', openProfileModal);
+            
+            // Кнопка закрытия профиля
+            document.getElementById('closeProfileBtn').addEventListener('click', closeProfileModal);
+            
+            // Кнопка сохранения профиля
+            document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
+            
+            // Кнопка поиска
+            document.getElementById('searchBtn').addEventListener('click', startSearch);
+            
+            // Кнопка остановки
+            document.getElementById('stopBtn').addEventListener('click', stopSearch);
+            
+            // Кнопка VIP
+            document.getElementById('vipBtn').addEventListener('click', openVipModal);
+            
+            // Кнопка закрытия VIP
+            document.getElementById('closeVipBtn').addEventListener('click', closeVipModal);
+            
+            // Кнопка копирования реквизитов
+            document.getElementById('copyPaymentBtn').addEventListener('click', copyPaymentInfo);
+            
+            // Закрытие модалок по клику вне
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
             });
-        });
+            
+            // Инициализация кнопок пола
+            initGenderButtons();
+            
+            // Инициализация опций поиска
+            initSearchOptions();
+        }
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', () => {
             loadUserData();
             updateUI();
             updateOnlineCount();
+            initEventListeners();
             setInterval(updateOnlineCount, 30000);
             
             // Сообщаем боту что приложение загружено
@@ -801,18 +812,6 @@
                 user_id: userData.id
             }));
         });
-
-        // Экспорт в глобальную область
-        window.selectGender = selectGender;
-        window.openProfileModal = openProfileModal;
-        window.closeProfileModal = closeProfileModal;
-        window.saveProfile = saveProfile;
-        window.setSearch = setSearch;
-        window.startSearch = startSearch;
-        window.stopSearch = stopSearch;
-        window.openVipModal = openVipModal;
-        window.closeVipModal = closeVipModal;
-        window.copyPaymentInfo = copyPaymentInfo;
     </script>
 </body>
 </html>
